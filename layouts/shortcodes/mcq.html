@@ -1,0 +1,48 @@
+<!-- filepath: /layouts/shortcodes/bs/accordion-choice.html -->
+{{- $data := "qa.mcq" }}
+{{- $flush := false }}
+{{- $alwaysOpen := false }}
+{{- if .IsNamedParams }}
+{{- if isset .Params "flush" }}{{ $flush = .Get "flush" }}{{ end }}
+{{- if isset .Params "alwaysOpen" }}
+{{- $alwaysOpen = .Get "alwaysOpen" }}
+{{- end }}
+{{- end }}
+{{- $items := index .Site.Data (split $data ".") }}
+{{- if not $items }}
+{{- warnf `[bootstrap][accordion-choice] the data file is missing: %s.` $data }}
+{{- else }}
+{{- $id := printf "accordion-choice-%d" time.Now.UnixMicro | anchorize }}
+<div class="accordion{{ cond $flush `accordion-flush` `` }} mb-4" id="{{ $id }}">
+  {{- $first := true }}
+  {{- range $name, $item := sort $items.items "weight" }}
+  {{- $show := cond (isset $item "show") $item.show $first }}
+  {{- $itemID := printf "%s-%d" $id $name | anchorize }}
+  <div class="accordion-item">
+    <h3 class="accordion-header">
+      <button class="accordion-button fw-bold{{ cond $show `` `collapsed` }}" type="button" data-bs-toggle="collapse"
+        data-bs-target="#{{ $itemID }}" {{ if $show }}aria-expanded="true" {{ end }} aria-controls="{{ $itemID }}">
+        {{ $item.question }}
+      </button>
+    </h3>
+    <div id="{{ $itemID }}" class="accordion-collapse collapse{{ cond $show `show` `` }}" {{ if not $alwaysOpen
+      }}data-bs-parent="#{{ $id }}" {{ end }}>
+      <div class="accordion-body">
+        <form>
+          {{- range $index, $answer := $item.answers }}
+          <div class="form-check">
+            <input class="form-check-input" type="{{ $item.type }}" name="question-{{ $name }}"
+              id="answer-{{ $itemID }}-{{ $index }}" value="{{ $answer }}">
+            <label class="form-check-label" for="answer-{{ $itemID }}-{{ $index }}">
+              {{ $answer }}
+            </label>
+          </div>
+          {{- end }}
+        </form>
+      </div>
+    </div>
+  </div>
+  {{- $first = false }}
+  {{- end }}
+</div>
+{{- end }}
